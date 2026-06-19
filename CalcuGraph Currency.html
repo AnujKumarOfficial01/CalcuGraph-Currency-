@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Anuj Kumar • Currency | Calculator | Live Graph</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js">
+    </script>
+    <style>
+        :root {
+            --blue: #007aff;
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --graph-bg: #ffffff;
+            --grid: #e5e5ea;
+            --axis: #8e8e93;
+            --spacing-sm: 12px;
+            --spacing-md: 20px;
+            --spacing-lg: 28px;
+            --radius-md: 20px;
+            --radius-lg: 32px;
+            --shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
+            --transition: 0.2s ease;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #1d1d1f;
+            background: url('https://images.pexels.com/photos/6465163/pexels-photo-6465163.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2') center/cover fixed;
+            background-color: #0b0d15;
+            padding: 30px 20px 40px;
+            position: relative;
+            gap: 25px;
+        }
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            z-index: -1;
+            pointer-events: none;
+        }
+        .lang-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 30px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: all var(--transition);
+        }
+        .lang-toggle:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.65);
+            border-color: #007aff;
+        }
+        .page-section {
+            display: none;
+            width: 100%;
+            padding: 0 12px;
+            transition: all 0.3s ease;
+        }
+        .page-section.active {
+            display: block;
+        }
+        .tool-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: var(--radius-lg);
+            padding: 35px 30px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            margin: 0 auto;
+            color: #1d1d1f;
+            transition: all 0.3s ease;
+        }
+        .landing-card {
+            max-width: 520px;
+        }
+        .currency-card {
+            max-width: 520px;
+        }
+        .calculator-card {
+            max-width: 520px;
+        }
+        .graph-card {
+            max-width: 720px;
+            padding: 28px 24px;
+        }
+        .card-header {
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        .icon-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #007aff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 26px;
+            color: #fff;
+        }
+        .card-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #6e6e73;
+        }
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 650;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #007aff;
+            margin-bottom: 8px;
+        }
+        .amount-input-wrapper {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            transition: all var(--transition);
+        }
+        .amount-input-wrapper:focus-within {
+            border-color: #007aff;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.08);
+        }
+        #fromFlag {
+            font-size: 1.7rem;
+            padding-left: 14px;
+        }
+        .currency-symbol {
+            padding: 0 6px 0 4px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #007aff;
+        }
+        .amount-input-wrapper input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 16px 14px 16px 6px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            outline: none;
+            font-family: inherit;
+        }
+        .currency-select-wrapper {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--radius-md);
+            position: relative;
+            transition: all var(--transition);
+        }
+        .currency-select-wrapper select {
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 16px 18px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1d1d1f;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            font-family: inherit;
+        }
+        .select-arrow {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #007aff;
+        }
+        .swap-container {
+            display: flex;
+            justify-content: center;
+            margin: 8px 0;
+        }
+        .swap-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #007aff;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+        .swap-btn:hover {
+            transform: rotate(180deg) scale(1.08);
+            background: #005bbf;
+        }
+        .result-section {
+            margin-top: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+        .result-amount {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .last-updated {
+            font-size: 0.7rem;
+            color: #8e8e93;
+            margin-top: 14px;
+            text-align: center;
+        }
+        .quick-info {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+        .quick-badge {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 7px 16px;
+            border-radius: 22px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            transition: all var(--transition);
+        }
+        .quick-badge:hover {
+            background: rgba(0, 122, 255, 0.1);
+            border-color: #007aff;
+        }
+        .calc-display {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            text-align: right;
+            margin-bottom: var(--spacing-md);
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            min-height: 68px;
+            word-break: break-all;
+        }
+        .calc-mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .calc-mode-toggle button {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 7px 22px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #1d1d1f;
+            transition: all var(--transition);
+        }
+        .calc-mode-toggle button.active-mode {
+            background: #007aff;
+            color: #fff;
+        }
+        .scientific-buttons {
+            display: none;
+        }
+        .scientific-buttons.active {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: var(--spacing-sm);
+        }
+        .scientific-buttons button {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 14px;
+            padding: 10px 4px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calc-buttons button {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            padding: 14px 4px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .calc-buttons button.operator {
+            background: rgba(0, 122, 255, 0.12);
+            font-weight: 600;
+        }
+        .calc-buttons button.equals {
+            background: #007aff;
+            color: #fff;
+        }
+        .eq-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+        .eq-input {
+            flex: 1;
+            min-width: 240px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            padding: 14px 18px;
+            font-size: 1rem;
+            font-weight: 500;
+            outline: none;
+            font-family: 'SF Mono', monospace;
+            transition: all var(--transition);
+        }
+        .eq-input:focus {
+            border-color: #007aff;
+            box-shadow: 0 0 0 6px rgba(0, 122, 255, 0.08);
+        }
+        .kb-mini-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: all var(--transition);
+        }
+        .kb-mini-toggle:hover {
+            background: #fff;
+            border-color: #007aff;
+        }
+        .virtual-keyboard {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-bottom: var(--spacing-md);
+            max-height: 400px;
+            opacity: 1;
+            transition: all 0.4s;
+            overflow: hidden;
+        }
+        .virtual-keyboard.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+        .virtual-keyboard button {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 10px 3px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            font-family: 'SF Mono', monospace;
+            transition: all var(--transition);
+        }
+        .virtual-keyboard button.func-key {
+            background: rgba(0, 122, 255, 0.1);
+            font-weight: 600;
+            color: #007aff;
+        }
+        .zoom-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: var(--spacing-md);
+            justify-content: center;
+        }
+        .zoom-slider {
+            width: 200px;
+            accent-color: #007aff;
+        }
+        .canvas-wrapper {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: var(--spacing-sm);
+        }
+        .canvas-wrapper canvas {
+            width: 100%;
+            display: block;
+        }
+        .graph-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: var(--spacing-sm);
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        .graph-error {
+            text-align: center;
+            color: #ff3b30;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        .about-wrapper {
+            width: 100%;
+            padding: 0 12px;
+            transition: all 0.3s ease;
+        }
+        .about-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(30px);
+            border-radius: 24px;
+            padding: 18px 26px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            color: #1d1d1f;
+            margin: 0 auto;
+            box-shadow: var(--shadow);
+            transition: all var(--transition);
+        }
+        .about-card a {
+            color: #007aff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .about-card a:hover {
+            background: rgba(0, 122, 255, 0.1);
+            border-color: #007aff;
+        }
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #007aff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            color: #1d1d1f;
+            padding: 10px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 550;
+            margin-bottom: 22px;
+            transition: all var(--transition);
+        }
+        .back-btn:hover {
+            background: #fff;
+            border-color: #007aff;
+            color: #007aff;
+        }
+        .choice-btn {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 26px;
+            padding: 26px 18px;
+            cursor: pointer;
+            width: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            transition: all var(--transition);
+        }
+        .choice-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: #007aff;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 122, 255, 0.2);
+        }
+        @media (max-width: 600px) {
+            .tool-card {
+                padding: 25px 18px;
+            }
+            .graph-card {
+                padding: 22px 14px;
+            }
+            .virtual-keyboard {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .choice-btn {
+                width: 130px;
+                padding: 20px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lang-toggle" id="langToggle" onclick="toggleLanguage()">हिं</div>
+
+    <!-- LANDING PAGE -->
+    <div class="page-section active" id="landingPage">
+        <div class="tool-card landing-card" style="text-align:center;">
+            <div class="card-header">
+                <div class="icon-circle">✨</div>
+                <h1 id="landing-title">क्या करना चाहेंगे?</h1>
+                <p class="subtitle" id="landing-subtitle">नीचे दिए गए विकल्पों में से चुनें</p>
+            </div>
+            <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+                <div class="choice-btn" onclick="showSection('currency')">
+                    <span>💱</span><span id="choice-currency-text">Currency Converter</span>
+                </div>
+                <div class="choice-btn" onclick="showSection('calculator')">
+                    <span>🧮</span><span id="choice-calculator-text">Calculator</span>
+                </div>
+                <div class="choice-btn" onclick="showSection('graph')">
+                    <span>📈</span><span id="choice-graph-text">Graph</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CURRENCY CONVERTER -->
+    <div class="page-section" id="currencySection">
+        <button class="back-btn" id="back-currency" onclick="showSection('landing')">← वापस</button>
+        <div class="tool-card currency-card">
+            <div class="card-header">
+                <div class="icon-circle">💱</div>
+                <h1 id="converter-heading">मुद्रा परिवर्तक</h1>
+                <p class="subtitle" id="converter-subtitle">100+ World Currencies — Live Exchange Rates</p>
+            </div>
+            <div class="form-group">
+                <label id="label-amount">💰 राशि</label>
+                <div class="amount-input-wrapper">
+                    <span id="fromFlag">🇺🇸</span>
+                    <span class="currency-symbol" id="fromSymbol">$</span>
+                    <input type="number" id="amount" value="1" min="0" step="any">
+                </div>
+            </div>
+            <div class="form-group">
+                <label id="label-from">📤 से</label>
+                <div class="currency-select-wrapper">
+                    <select id="fromCurrency"></select>
+                    <span class="select-arrow">▼</span>
+                </div>
+            </div>
+            <div class="swap-container"><button class="swap-btn" id="swapBtn">⇅</button></div>
+            <div class="form-group">
+                <label id="label-to">📥 में</label>
+                <div class="currency-select-wrapper">
+                    <select id="toCurrency"></select>
+                    <span class="select-arrow">▼</span>
+                </div>
+            </div>
+            <div class="result-section">
+                <div class="result-amount" id="resultAmount">0.00</div>
+                <div class="result-rate" id="resultRate"></div>
+            </div>
+            <div class="quick-info" id="quickInfo">
+                <span class="quick-badge">💵→🇮🇳</span>
+                <span class="quick-badge">💶→💵</span>
+                <span class="quick-badge">💷→💶</span>
+                <span class="quick-badge">💴→💵</span>
+                <span class="quick-badge">🇦🇺→🇨🇦</span>
+                <span class="quick-badge">🇨🇭→🇯🇵</span>
+            </div>
+            <div class="last-updated" id="lastUpdated">Live rates • updating...</div>
+        </div>
+    </div>
+
+    <!-- CALCULATOR (UNCHANGED) -->
+    <div class="page-section" id="calculatorSection">
+        <button class="back-btn" id="back-calculator" onclick="showSection('landing')">← वापस</button>
+        <div class="tool-card calculator-card">
+            <div class="card-header">
+                <div class="icon-circle">🧮</div>
+                <h1 id="calc-heading">कैलकुलेटर</h1>
+                <p class="subtitle" id="calc-subtitle">Normal & Scientific (up to 25 decimals)</p>
+            </div>
+            <div class="calc-display" id="calcDisplay">0</div>
+            <div class="calc-mode-toggle">
+                <button id="normalModeBtn" class="active-mode" onclick="setCalcMode('normal')">Normal</button>
+                <button id="scientificModeBtn" onclick="setCalcMode('scientific')">Scientific</button>
+            </div>
+            <div class="scientific-buttons" id="scientificButtons">
+                <button onclick="appendCalc('sin(')">sin</button>
+                <button onclick="appendCalc('cos(')">cos</button>
+                <button onclick="appendCalc('tan(')">tan</button>
+                <button onclick="appendCalc('log(')">log</button>
+                <button onclick="appendCalc('ln(')">ln</button>
+                <button onclick="appendCalc('√(')">√</button>
+                <button onclick="appendCalc('^')">xʸ</button>
+                <button onclick="appendCalc('π')">π</button>
+            </div>
+            <div class="calc-buttons">
+                <button onclick="appendCalc('7')">7</button><button onclick="appendCalc('8')">8</button>
+                <button onclick="appendCalc('9')">9</button><button class="operator" onclick="appendCalc('/')">÷</button>
+                <button onclick="appendCalc('4')">4</button><button onclick="appendCalc('5')">5</button>
+                <button onclick="appendCalc('6')">6</button><button class="operator" onclick="appendCalc('*')">×</button>
+                <button onclick="appendCalc('1')">1</button><button onclick="appendCalc('2')">2</button>
+                <button onclick="appendCalc('3')">3</button><button class="operator" onclick="appendCalc('-')">−</button>
+                <button onclick="appendCalc('0')">0</button><button onclick="appendCalc('.')">.</button>
+                <button class="equals" onclick="calculate()">=</button><button class="operator" onclick="appendCalc('+')">+</button>
+                <button onclick="clearCalc()">C</button><button onclick="deleteLast()">⌫</button>
+                <button onclick="appendCalc('(')">(</button><button onclick="appendCalc(')')">)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRAPH SECTION (UNCHANGED) -->
+    <div class="page-section" id="graphSection">
+        <button class="back-btn" id="back-graph" onclick="showSection('landing')">← वापस</button>
+        <div class="tool-card graph-card">
+            <div class="card-header">
+                <div class="icon-circle">📈</div>
+                <h1 id="graph-heading">लाइव ग्राफ कैलकुलेटर</h1>
+                <p class="subtitle" id="graph-subtitle">x²+y²=9 अब एकदम साफ़ circle बनाता है</p>
+            </div>
+            <div class="eq-input-row">
+                <input type="text" class="eq-input" id="eqInput" placeholder="sin(x), cos(x), x^2+y^2=9…" autocomplete="off">
+                <div class="kb-mini-toggle" onclick="toggleKeyboard()" title="Keyboard">⌨</div>
+            </div>
+            <div class="virtual-keyboard" id="virtualKeyboard">
+                <button class="func-key" onclick="insertEq('sin(')">sin</button>
+                <button class="func-key" onclick="insertEq('cos(')">cos</button>
+                <button class="func-key" onclick="insertEq('tan(')">tan</button>
+                <button class="func-key" onclick="insertEq('log(')">log</button>
+                <button class="func-key" onclick="insertEq('ln(')">ln</button>
+                <button class="func-key" onclick="insertEq('sqrt(')">√</button>
+                <button onclick="insertEq('x')">x</button>
+                <button onclick="insertEq('y')">y</button>
+                <button onclick="insertEq('^')">xʸ</button>
+                <button onclick="insertEq('(')">(</button>
+                <button onclick="insertEq(')')">)</button>
+                <button onclick="insertEq('π')">π</button>
+                <button onclick="insertEq('e')">e</button>
+                <button onclick="insertEq('=')">=</button>
+                <button onclick="insertEq('7')">7</button>
+                <button onclick="insertEq('8')">8</button>
+                <button onclick="insertEq('9')">9</button>
+                <button onclick="insertEq('/')">÷</button>
+                <button onclick="insertEq('abs(')">|x|</button>
+                <button onclick="insertEq(',')">,</button>
+                <button onclick="insertEq('4')">4</button>
+                <button onclick="insertEq('5')">5</button>
+                <button onclick="insertEq('6')">6</button>
+                <button onclick="insertEq('*')">×</button>
+                <button onclick="clearEq()" style="color:#ff3b30;">C</button>
+                <button onclick="deleteEqLast()">⌫</button>
+                <button onclick="insertEq('1')">1</button>
+                <button onclick="insertEq('2')">2</button>
+                <button onclick="insertEq('3')">3</button>
+                <button onclick="insertEq('-')">−</button>
+                <button onclick="insertEq('0')">0</button>
+                <button onclick="insertEq('.')">.</button>
+                <button class="func-key" onclick="insertEq('+')" style="grid-column: span 2;">+</button>
+            </div>
+            <div class="zoom-row">
+                <span id="zoomLabel">🔍 ज़ूम:</span>
+                <input type="range" class="zoom-slider" id="zoomSlider" min="50" max="200" value="100" step="1">
+                <span id="zoomValue" style="font-size:0.85rem;">100%</span>
+            </div>
+            <div class="canvas-wrapper" id="canvasContainer">
+                <canvas id="graphCanvas"></canvas>
+            </div>
+            <div class="graph-legend" id="graphLegend"></div>
+            <div class="graph-error" id="graphError"></div>
+        </div>
+    </div>
+
+    <!-- ABOUT SECTION -->
+    <div class="about-wrapper" id="aboutWrapper">
+        <div class="about-card" id="aboutCard">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="avatar">AK</div>
+                <div>
+                    <strong style="font-size:1.05rem;">Anuj Kumar</strong>
+                    <div id="about-role" style="font-size:0.75rem; opacity:0.65;">Developer & Designer</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="mailto:anuj9005ak@gmail.com">✉️ anuj9005ak@gmail.com</a>
+                <a href="https://instagram.com/anuj_kumar9005" target="_blank">📷 anuj_kumar9005</a>
+                <a href="https://www.linkedin.com/in/anuj-kumar-5821972b6" target="_blank">🔗 LinkedIn</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== LANGUAGE SYSTEM ====================
+        const translations = {
+            hi: {
+                'landing-title': 'क्या करना चाहेंगे?',
+                'landing-subtitle': 'नीचे दिए गए विकल्पों में से चुनें',
+                'choice-currency-text': 'Currency Converter',
+                'choice-calculator-text': 'Calculator',
+                'choice-graph-text': 'ग्राफ',
+                'back-currency': '← वापस',
+                'back-calculator': '← वापस',
+                'back-graph': '← वापस',
+                'converter-heading': 'मुद्रा परिवर्तक',
+                'converter-subtitle': '100+ World Currencies — Live Exchange Rates',
+                'label-amount': '💰 राशि',
+                'label-from': '📤 से',
+                'label-to': '📥 में',
+                'calc-heading': 'कैलकुलेटर',
+                'calc-subtitle': 'सामान्य और वैज्ञानिक (25 दशमलव तक)',
+                'normalModeBtn': 'सामान्य',
+                'scientificModeBtn': 'वैज्ञानिक',
+                'graph-heading': 'लाइव ग्राफ कैलकुलेटर',
+                'graph-subtitle': 'x²+y²=9 अब एकदम साफ़ circle बनाता है',
+                'zoomLabel': '🔍 ज़ूम:',
+                'about-role': 'डेवलपर और डिज़ाइनर',
+                'lastUpdated': 'लाइव रेट • अपडेट हो रहा है...'
+            },
+            en: {
+                'landing-title': 'What would you like to do?',
+                'landing-subtitle': 'Choose an option below',
+                'choice-currency-text': 'Currency Converter',
+                'choice-calculator-text': 'Calculator',
+                'choice-graph-text': 'Graph',
+                'back-currency': '← Back',
+                'back-calculator': '← Back',
+                'back-graph': '← Back',
+                'converter-heading': 'Currency Converter',
+                'converter-subtitle': '100+ World Currencies — Live Exchange Rates',
+                'label-amount': '💰 Amount',
+                'label-from': '📤 From',
+                'label-to': '📥 To',
+                'calc-heading': 'Calculator',
+                'calc-subtitle': 'Normal & Scientific (up to 25 decimals)',
+                'normalModeBtn': 'Normal',
+                'scientificModeBtn': 'Scientific',
+                'graph-heading': 'Live Graph Calculator',
+                'graph-subtitle': 'x²+y²=9 draws a perfect circle now',
+                'zoomLabel': '🔍 Zoom:',
+                'about-role': 'Developer & Designer',
+                'lastUpdated': 'Live rates • updating...'
+            }
+        };
+        let currentLang = 'hi';
+
+        function applyLanguage() {
+            const map = translations[currentLang];
+            for (const [id, text] of Object.entries(map)) {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            }
+            document.getElementById('langToggle').textContent = currentLang === 'hi' ? 'EN' : 'हिं';
+        }
+
+        function toggleLanguage() { currentLang = currentLang === 'hi' ? 'en' : 'hi';
+            applyLanguage(); }
+        applyLanguage();
+
+        // ==================== PAGE SWITCHING + ABOUT WIDTH ====================
+        function setAboutWidth(maxWidth) {
+            const aboutCard = document.getElementById('aboutCard');
+            if (aboutCard) aboutCard.style.maxWidth = maxWidth;
+        }
+
+        function showSection(section) {
+            ['landingPage', 'currencySection', 'calculatorSection', 'graphSection'].forEach(id => {
+                document.getElementById(id).classList.remove('active');
+            });
+            if (section === 'landing') {
+                document.getElementById('landingPage').classList.add('active');
+                setAboutWidth('520px');
+            } else if (section === 'currency') {
+                document.getElementById('currencySection').classList.add('active');
+                if (!window._currencyInit) { initCurrencyConverter();
+                    window._currencyInit = true; }
+                setAboutWidth('520px');
+            } else if (section === 'calculator') {
+                document.getElementById('calculatorSection').classList.add('active');
+                setCalcMode('normal');
+                setAboutWidth('520px');
+            } else if (section === 'graph') {
+                document.getElementById('graphSection').classList.add('active');
+                if (!window._graphInit) { initLiveGraph();
+                    window._graphInit = true; }
+                drawGraph();
+                setAboutWidth('720px');
+            }
+        }
+
+        // ==================== CURRENCY CONVERTER (100+ CURRENCIES) ====================
+        function initCurrencyConverter() {
+            const currencies = [
+                { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
+                { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
+                { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧' },
+                { code: 'INR', name: 'Indian Rupee', symbol: '₹', flag: '🇮🇳' },
+                { code: 'JPY', name: 'Japanese Yen', symbol: '¥', flag: '🇯🇵' },
+                { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', flag: '🇨🇳' },
+                { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', flag: '🇦🇺' },
+                { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', flag: '🇨🇦' },
+                { code: 'CHF', name: 'Swiss Franc', symbol: 'Fr', flag: '🇨🇭' },
+                { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$', flag: '🇸🇬' },
+                { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$', flag: '🇭🇰' },
+                { code: 'KRW', name: 'South Korean Won', symbol: '₩', flag: '🇰🇷' },
+                { code: 'MXN', name: 'Mexican Peso', symbol: 'Mex$', flag: '🇲🇽' },
+                { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+                { code: 'ZAR', name: 'South African Rand', symbol: 'R', flag: '🇿🇦' },
+                { code: 'RUB', name: 'Russian Ruble', symbol: '₽', flag: '🇷🇺' },
+                { code: 'TRY', name: 'Turkish Lira', symbol: '₺', flag: '🇹🇷' },
+                { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼', flag: '🇸🇦' },
+                { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', flag: '🇦🇪' },
+                { code: 'SEK', name: 'Swedish Krona', symbol: 'kr', flag: '🇸🇪' },
+                { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr', flag: '🇳🇴' },
+                { code: 'DKK', name: 'Danish Krone', symbol: 'kr', flag: '🇩🇰' },
+                { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$', flag: '🇳🇿' },
+                { code: 'THB', name: 'Thai Baht', symbol: '฿', flag: '🇹🇭' },
+                { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM', flag: '🇲🇾' },
+                { code: 'PHP', name: 'Philippine Peso', symbol: '₱', flag: '🇵🇭' },
+                { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp', flag: '🇮🇩' },
+                { code: 'VND', name: 'Vietnamese Dong', symbol: '₫', flag: '🇻🇳' },
+                { code: 'PKR', name: 'Pakistani Rupee', symbol: '₨', flag: '🇵🇰' },
+                { code: 'BDT', name: 'Bangladeshi Taka', symbol: '৳', flag: '🇧🇩' },
+                { code: 'NGN', name: 'Nigerian Naira', symbol: '₦', flag: '🇳🇬' },
+                { code: 'EGP', name: 'Egyptian Pound', symbol: 'E£', flag: '🇪🇬' },
+                { code: 'PLN', name: 'Polish Zloty', symbol: 'zł', flag: '🇵🇱' },
+                { code: 'CZK', name: 'Czech Koruna', symbol: 'Kč', flag: '🇨🇿' },
+                { code: 'HUF', name: 'Hungarian Forint', symbol: 'Ft', flag: '🇭🇺' },
+                { code: 'ILS', name: 'Israeli Shekel', symbol: '₪', flag: '🇮🇱' },
+                { code: 'CLP', name: 'Chilean Peso', symbol: 'CLP$', flag: '🇨🇱' },
+                { code: 'COP', name: 'Colombian Peso', symbol: 'COL$', flag: '🇨🇴' },
+                { code: 'ARS', name: 'Argentine Peso', symbol: 'AR$', flag: '🇦🇷' },
+                { code: 'PEN', name: 'Peruvian Sol', symbol: 'S/', flag: '🇵🇪' },
+                { code: 'QAR', name: 'Qatari Riyal', symbol: 'QR', flag: '🇶🇦' },
+                { code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'KD', flag: '🇰🇼' },
+                { code: 'OMR', name: 'Omani Rial', symbol: 'OR', flag: '🇴🇲' },
+                { code: 'BHD', name: 'Bahraini Dinar', symbol: 'BD', flag: '🇧🇭' },
+                { code: 'LKR', name: 'Sri Lankan Rupee', symbol: 'Rs', flag: '🇱🇰' },
+                { code: 'NPR', name: 'Nepalese Rupee', symbol: '₨', flag: '🇳🇵' },
+                { code: 'UAH', name: 'Ukrainian Hryvnia', symbol: '₴', flag: '🇺🇦' },
+                { code: 'RON', name: 'Romanian Leu', symbol: 'lei', flag: '🇷🇴' },
+                { code: 'ISK', name: 'Icelandic Krona', symbol: 'kr', flag: '🇮🇸' },
+                { code: 'BGN', name: 'Bulgarian Lev', symbol: 'лв', flag: '🇧🇬' },
+                { code: 'MAD', name: 'Moroccan Dirham', symbol: 'DH', flag: '🇲🇦' },
+                { code: 'TWD', name: 'Taiwan Dollar', symbol: 'NT$', flag: '🇹🇼' },
+                { code: 'JOD', name: 'Jordanian Dinar', symbol: 'JD', flag: '🇯🇴' },
+                { code: 'GHS', name: 'Ghanaian Cedi', symbol: 'GH₵', flag: '🇬🇭' },
+                { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh', flag: '🇰🇪' },
+                { code: 'UGX', name: 'Ugandan Shilling', symbol: 'USh', flag: '🇺🇬' },
+                { code: 'TZS', name: 'Tanzanian Shilling', symbol: 'TSh', flag: '🇹🇿' },
+                { code: 'XOF', name: 'West African CFA Franc', symbol: 'CFA', flag: '🇨🇮' },
+                { code: 'XAF', name: 'Central African CFA Franc', symbol: 'FCFA', flag: '🇨🇲' },
+                { code: 'UZS', name: 'Uzbekistani Som', symbol: 'soʻm', flag: '🇺🇿' },
+                { code: 'KZT', name: 'Kazakhstani Tenge', symbol: '₸', flag: '🇰🇿' },
+                { code: 'AZN', name: 'Azerbaijani Manat', symbol: '₼', flag: '🇦🇿' },
+                { code: 'BYN', name: 'Belarusian Ruble', symbol: 'Br', flag: '🇧🇾' },
+                { code: 'RSD', name: 'Serbian Dinar', symbol: 'дин', flag: '🇷🇸' },
+                { code: 'HRK', name: 'Croatian Kuna', symbol: 'kn', flag: '🇭🇷' },
+                { code: 'DOP', name: 'Dominican Peso', symbol: 'RD$', flag: '🇩🇴' },
+                { code: 'GTQ', name: 'Guatemalan Quetzal', symbol: 'Q', flag: '🇬🇹' },
+                { code: 'CRC', name: 'Costa Rican Colón', symbol: '₡', flag: '🇨🇷' },
+                { code: 'UYU', name: 'Uruguayan Peso', symbol: '$U', flag: '🇺🇾' },
+                { code: 'TND', name: 'Tunisian Dinar', symbol: 'DT', flag: '🇹🇳' },
+                { code: 'ETB', name: 'Ethiopian Birr', symbol: 'Br', flag: '🇪🇹' },
+                { code: 'MMK', name: 'Myanmar Kyat', symbol: 'Ks', flag: '🇲🇲' },
+                { code: 'KHR', name: 'Cambodian Riel', symbol: '៛', flag: '🇰🇭' },
+                { code: 'LAK', name: 'Lao Kip', symbol: '₭', flag: '🇱🇦' },
+                { code: 'MNT', name: 'Mongolian Tugrik', symbol: '₮', flag: '🇲🇳' },
+                { code: 'BND', name: 'Brunei Dollar', symbol: 'B$', flag: '🇧🇳' },
+                { code: 'FJD', name: 'Fijian Dollar', symbol: 'FJ$', flag: '🇫🇯' },
+                { code: 'PGK', name: 'Papua New Guinean Kina', symbol: 'K', flag: '🇵🇬' },
+                { code: 'SBD', name: 'Solomon Islands Dollar', symbol: 'SI$', flag: '🇸🇧' },
+                { code: 'VUV', name: 'Vanuatu Vatu', symbol: 'VT', flag: '🇻🇺' },
+                { code: 'WST', name: 'Samoan Tala', symbol: 'T', flag: '🇼🇸' },
+                { code: 'TOP', name: 'Tongan Paʻanga', symbol: 'T$', flag: '🇹🇴' },
+                { code: 'MOP', name: 'Macanese Pataca', symbol: 'MOP$', flag: '🇲🇴' },
+                { code: 'BAM', name: 'Bosnia-Herzegovina Mark', symbol: 'KM', flag: '🇧🇦' },
+                { code: 'MKD', name: 'Macedonian Denar', symbol: 'ден', flag: '🇲🇰' },
+                { code: 'ALL', name: 'Albanian Lek', symbol: 'L', flag: '🇦🇱' },
+                { code: 'AMD', name: 'Armenian Dram', symbol: '֏', flag: '🇦🇲' },
+                { code: 'GEL', name: 'Georgian Lari', symbol: '₾', flag: '🇬🇪' },
+                { code: 'MDL', name: 'Moldovan Leu', symbol: 'L', flag: '🇲🇩' },
+                { code: 'KGS', name: 'Kyrgyzstani Som', symbol: 'с', flag: '🇰🇬' },
+                { code: 'TJS', name: 'Tajikistani Somoni', symbol: 'SM', flag: '🇹🇯' },
+                { code: 'TMT', name: 'Turkmenistani Manat', symbol: 'm', flag: '🇹🇲' },
+                { code: 'MUR', name: 'Mauritian Rupee', symbol: '₨', flag: '🇲🇺' },
+                { code: 'MVR', name: 'Maldivian Rufiyaa', symbol: 'Rf', flag: '🇲🇻' },
+                { code: 'SCR', name: 'Seychellois Rupee', symbol: '₨', flag: '🇸🇨' },
+                { code: 'BWP', name: 'Botswana Pula', symbol: 'P', flag: '🇧🇼' },
+                { code: 'NAD', name: 'Namibian Dollar', symbol: 'N$', flag: '🇳🇦' },
+                { code: 'SZL', name: 'Eswatini Lilangeni', symbol: 'L', flag: '🇸🇿' },
+                { code: 'LSL', name: 'Lesotho Loti', symbol: 'L', flag: '🇱🇸' },
+                { code: 'ZMW', name: 'Zambian Kwacha', symbol: 'ZK', flag: '🇿🇲' },
+                { code: 'MWK', name: 'Malawian Kwacha', symbol: 'MK', flag: '🇲🇼' },
+                { code: 'MZN', name: 'Mozambican Metical', symbol: 'MT', flag: '🇲🇿' },
+                { code: 'AOA', name: 'Angolan Kwanza', symbol: 'Kz', flag: '🇦🇴' },
+                { code: 'CVE', name: 'Cape Verdean Escudo', symbol: 'Esc', flag: '🇨🇻' },
+                { code: 'STN', name: 'São Tomé and Príncipe Dobra', symbol: 'Db', flag: '🇸🇹' },
+                { code: 'GMD', name: 'Gambian Dalasi', symbol: 'D', flag: '🇬🇲' },
+                { code: 'SLL', name: 'Sierra Leonean Leone', symbol: 'Le', flag: '🇸🇱' },
+                { code: 'LRD', name: 'Liberian Dollar', symbol: 'L$', flag: '🇱🇷' },
+                { code: 'GNF', name: 'Guinean Franc', symbol: 'FG', flag: '🇬🇳' },
+                { code: 'MRU', name: 'Mauritanian Ouguiya', symbol: 'UM', flag: '🇲🇷' },
+                { code: 'SDG', name: 'Sudanese Pound', symbol: 'ج.س', flag: '🇸🇩' },
+                { code: 'SSP', name: 'South Sudanese Pound', symbol: '£', flag: '🇸🇸' },
+                { code: 'DJF', name: 'Djiboutian Franc', symbol: 'Fdj', flag: '🇩🇯' },
+                { code: 'SOS', name: 'Somali Shilling', symbol: 'Sh', flag: '🇸🇴' },
+                { code: 'ERN', name: 'Eritrean Nakfa', symbol: 'Nkf', flag: '🇪🇷' },
+                { code: 'LYD', name: 'Libyan Dinar', symbol: 'LD', flag: '🇱🇾' },
+                { code: 'DZD', name: 'Algerian Dinar', symbol: 'دج', flag: '🇩🇿' },
+            ];
+            const fromSel = document.getElementById('fromCurrency');
+            const toSel = document.getElementById('toCurrency');
+            const amt = document.getElementById('amount');
+            const swap = document.getElementById('swapBtn');
+            const resAmt = document.getElementById('resultAmount');
+            const resRate = document.getElementById('resultRate');
+            const fromFlag = document.getElementById('fromFlag');
+            const fromSym = document.getElementById('fromSymbol');
+            const quick = document.getElementById('quickInfo');
+            const lastUpd = document.getElementById('lastUpdated');
+            let rates = {},
+                base = 'USD';
+
+            function populate() {
+                const sorted = [...currencies].sort((a, b) => a.code.localeCompare(b.code));
+                const popularCodes = ['USD', 'EUR', 'GBP', 'INR', 'JPY', 'CNY', 'AUD', 'CAD', 'CHF', 'SGD', 'HKD',
+                    'KRW', 'MXN', 'BRL', 'ZAR', 'RUB', 'TRY', 'SAR', 'AED'
+                ];
+                const popular = sorted.filter(c => popularCodes.includes(c.code));
+                const others = sorted.filter(c => !popularCodes.includes(c.code));
+                popular.sort((a, b) => popularCodes.indexOf(a.code) - popularCodes.indexOf(b.code));
+                const all = [...popular, ...others];
+                const opts = all.map(c =>
+                    `<option value="${c.code}" data-flag="${c.flag}" data-symbol="${c.symbol}">${c.flag} ${c.code} — ${c.name}</option>`
+                ).join('');
+                fromSel.innerHTML = opts;
+                toSel.innerHTML = opts;
+                fromSel.value = 'USD';
+                toSel.value = 'INR';
+                updateFS();
+            }
+
+            function updateFS() {
+                const opt = fromSel.options[fromSel.selectedIndex];
+                fromFlag.textContent = opt?.dataset.flag || '🇺🇸';
+                fromSym.textContent = opt?.dataset.symbol || '$';
+            }
+            async function fetchRates(b) {
+                try {
+                    const r = await fetch(`https://open.er-api.com/v6/latest/${b}`);
+                    const d = await r.json();
+                    if (d.result === 'success') {
+                        rates = d.rates;
+                        base = b;
+                        lastUpd.textContent = `Live rates • ${new Date().toLocaleTimeString()}`;
+                        return rates;
+                    }
+                } catch (e) {
+                    try {
+                        const fb = await fetch(`https://api.exchangerate-api.com/v4/latest/${b}`);
+                        const fd = await fb.json();
+                        rates = fd.rates;
+                        base = b;
+                        lastUpd.textContent = `Live rates • ${new Date().toLocaleTimeString()}`;
+                        return rates;
+                    } catch (e2) {}
+                }
+            }
+            async function convert() {
+                const f = fromSel.value,
+                    t = toSel.value,
+                    a = parseFloat(amt.value);
+                if (isNaN(a)) return;
+                if (f === t) {
+                    resAmt.textContent = `${fromSym.textContent} ${a}`;
+                    resRate.textContent = `1 ${f} = 1 ${t}`;
+                    return;
+                }
+                if (base !== f) await fetchRates(f);
+                const rate = rates[t];
+                if (rate) {
+                    resAmt.textContent =
+                        `${toSel.options[toSel.selectedIndex]?.dataset.symbol || ''} ${(a*rate).toFixed(4)}`;
+                    resRate.textContent = `1 ${f} = ${rate.toFixed(6)} ${t}`;
+                }
+            }
+            fromSel.addEventListener('change', () => { updateFS();
+                convert(); });
+            toSel.addEventListener('change', convert);
+            amt.addEventListener('input', convert);
+            swap.addEventListener('click', () => { [fromSel.value, toSel.value] = [toSel.value, fromSel.value];
+                updateFS();
+                convert(); });
+            quick.addEventListener('click', (e) => {
+                if (e.target.classList.contains('quick-badge')) {
+                    const map = {
+                        '💵→🇮🇳': ['USD', 'INR'],
+                        '💶→💵': ['EUR', 'USD'],
+                        '💷→💶': ['GBP', 'EUR'],
+                        '💴→💵': ['JPY', 'USD'],
+                        '🇦🇺→🇨🇦': ['AUD', 'CAD'],
+                        '🇨🇭→🇯🇵': ['CHF', 'JPY']
+                    };
+                    const p = map[e.target.textContent];
+                    if (p) { fromSel.value = p[0];
+                        toSel.value = p[1];
+                        updateFS();
+                        amt.value = '1';
+                        convert(); }
+                }
+            });
+            populate();
+            fetchRates('USD').then(convert);
+        }
+
+        // ==================== CALCULATOR (UNCHANGED) ====================
+        let calcExpr = '';
+        const calcDisp = document.getElementById('calcDisplay');
+
+        function setCalcMode(mode) {
+            document.getElementById('normalModeBtn').classList.toggle('active-mode', mode === 'normal');
+            document.getElementById('scientificModeBtn').classList.toggle('active-mode', mode === 'scientific');
+            document.getElementById('scientificButtons').classList.toggle('active', mode === 'scientific');
+        }
+
+        function appendCalc(v) {
+            if (calcExpr === '0' && v !== '.' && !v.startsWith('sin') && !v.startsWith('cos') && !v.startsWith(
+                    'tan') && !v.startsWith('log') && !v.startsWith('ln') && !v.startsWith('√') && !v.startsWith(
+                    '^') && v !== 'π') calcExpr = '';
+            calcExpr += v;
+            calcDisp.textContent = calcExpr || '0';
+        }
+
+        function clearCalc() { calcExpr = '';
+            calcDisp.textContent = '0'; }
+
+        function deleteLast() { calcExpr = calcExpr.slice(0, -1);
+            calcDisp.textContent = calcExpr || '0'; }
+
+        function calculate() {
+            try {
+                let expr = calcExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/π/g, 'Math.PI')
+                    .replace(/sin\(/g, 'Math.sin(Math.PI/180*(').replace(/cos\(/g, 'Math.cos(Math.PI/180*(')
+                    .replace(/tan\(/g, 'Math.tan(Math.PI/180*(').replace(/log\(/g, 'Math.log10(')
+                    .replace(/ln\(/g, 'Math.log(').replace(/√\(/g, 'Math.sqrt(').replace(/\^/g, '**');
+                let open = (expr.match(/\(/g) || []).length,
+                    close = (expr.match(/\)/g) || []).length;
+                while (close < open) { expr += ')';
+                    close++; }
+                const result = Function('"use strict"; return (' + expr + ')')();
+                let formatted = Number(result).toFixed(25).replace(/\.?0+$/, '');
+                if (formatted === '') formatted = '0';
+                calcExpr = formatted;
+                calcDisp.textContent = formatted;
+            } catch (e) { calcDisp.textContent = 'Error';
+                calcExpr = ''; }
+        }
+
+        // ==================== GRAPH ENGINE (UNCHANGED) ====================
+        const graphColors = ['#007aff', '#ff9500', '#34c759', '#ff3b30', '#af52de', '#5ac8fa'];
+        let graphEquations = ['sin(x)', 'cos(x)'];
+        let zoomLevel = 1.0;
+
+        function initLiveGraph() {
+            const eqInput = document.getElementById('eqInput');
+            eqInput.value = graphEquations.join(', ');
+            eqInput.addEventListener('input', debounce(() => {
+                const raw = eqInput.value.trim();
+                graphEquations = raw ? raw.split(',').map(e => e.trim()).filter(e => e.length > 0) : [];
+                if (graphEquations.length === 0) graphEquations = ['x'];
+                drawGraph();
+            }, 300));
+            document.getElementById('zoomSlider').addEventListener('input', (e) => {
+                const sliderVal = parseInt(e.target.value);
+                zoomLevel = 100 / sliderVal;
+                document.getElementById('zoomValue').textContent = sliderVal + '%';
+                drawGraph();
+            });
+            window.insertEq = (val) => {
+                const input = document.getElementById('eqInput');
+                const start = input.selectionStart;
+                input.value = input.value.substring(0, start) + val + input.value.substring(input.selectionEnd);
+                input.setSelectionRange(start + val.length, start + val.length);
+                input.focus();
+                input.dispatchEvent(new Event('input'));
+            };
+            window.clearEq = () => { document.getElementById('eqInput').value = '';
+                document.getElementById('eqInput').focus();
+                document.getElementById('eqInput').dispatchEvent(new Event('input')); };
+            window.deleteEqLast = () => {
+                const input = document.getElementById('eqInput');
+                const start = input.selectionStart;
+                if (start > 0) {
+                    input.value = input.value.substring(0, start - 1) + input.value.substring(start);
+                    input.setSelectionRange(start - 1, start - 1);
+                    input.focus();
+                    input.dispatchEvent(new Event('input'));
+                }
+            };
+            window.toggleKeyboard = () => document.getElementById('virtualKeyboard').classList.toggle('collapsed');
+        }
+
+        function parseEquation(eq) {
+            let expr = eq.trim();
+            let isImplicit = false;
+            if (expr.includes('=')) {
+                const parts = expr.split('=');
+                if (parts.length === 2) {
+                    expr = `(${parts[0]})-(${parts[1]})`;
+                    isImplicit = true;
+                }
+            }
+            if (!isImplicit && /[^a-zA-Z]y[^a-zA-Z]|^y[^a-zA-Z]|[^a-zA-Z]y$/.test(expr)) isImplicit = true;
+            return { expr, isImplicit };
+        }
+
+        function compileExpression(expr) {
+            try { return math.parse(expr).compile(); } catch (e) { return null; }
+        }
+
+        function evalCompiled(compiled, scope) {
+            try {
+                const res = compiled.evaluate(scope);
+                if (typeof res === 'number' && isFinite(res) && !isNaN(res)) return res;
+            } catch (e) {}
+            return NaN;
+        }
+
+        function lerp(a, b, t) { return a + t * (b - a); }
+
+        function drawGraph() {
+            const canvas = document.getElementById('graphCanvas');
+            const container = document.getElementById('canvasContainer');
+            const legendDiv = document.getElementById('graphLegend');
+            const errorDiv = document.getElementById('graphError');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
+            const width = rect.width;
+            const height = Math.min(width * 0.9, 550);
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = width,
+                H = height,
+                margin = 50;
+            const plotW = W - 2 * margin,
+                plotH = H - 2 * margin;
+            const baseRange = 10;
+            const xMin = -baseRange * zoomLevel,
+                xMax = baseRange * zoomLevel;
+            const yMin = -baseRange * zoomLevel,
+                yMax = baseRange * zoomLevel;
+
+            function toScreenX(x) { return margin + (x - xMin) / (xMax - xMin) * plotW; }
+
+            function toScreenY(y) { return margin + (yMax - y) / (yMax - yMin) * plotH; }
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = '#e5e5ea';
+            ctx.lineWidth = 0.5;
+            const step = Math.max(1, Math.round(baseRange * zoomLevel / 5));
+            for (let x = Math.ceil(xMin / step) * step; x <= xMax; x += step) {
+                const sx = toScreenX(x);
+                ctx.beginPath();
+                ctx.moveTo(sx, margin);
+                ctx.lineTo(sx, H - margin);
+                ctx.stroke();
+            }
+            for (let y = Math.ceil(yMin / step) * step; y <= yMax; y += step) {
+                const sy = toScreenY(y);
+                ctx.beginPath();
+                ctx.moveTo(margin, sy);
+                ctx.lineTo(W - margin, sy);
+                ctx.stroke();
+            }
+            ctx.strokeStyle = '#8e8e93';
+            ctx.lineWidth = 2;
+            const sx0 = toScreenX(0),
+                sy0 = toScreenY(0);
+            ctx.beginPath();
+            ctx.moveTo(sx0, margin);
+            ctx.lineTo(sx0, H - margin);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(margin, sy0);
+            ctx.lineTo(W - margin, sy0);
+            ctx.stroke();
+            ctx.fillStyle = '#8e8e93';
+            ctx.font = '11px -apple-system';
+            ctx.textAlign = 'center';
+            for (let x = Math.ceil(xMin / step) * step; x <= xMax; x += step) {
+                if (x === 0) continue;
+                ctx.fillText(x, toScreenX(x), sy0 + 16);
+            }
+            ctx.textAlign = 'right';
+            for (let y = Math.ceil(yMin / step) * step; y <= yMax; y += step) {
+                if (y === 0) continue;
+                ctx.fillText(y, sx0 - 6, toScreenY(y) + 4);
+            }
+            ctx.fillStyle = '#1d1d1f';
+            ctx.font = 'bold 13px -apple-system';
+            ctx.fillText('x', W - margin + 18, sy0 + 5);
+            ctx.fillText("x'", margin - 18, sy0 + 5);
+            ctx.fillText('y', sx0, margin - 10);
+            ctx.fillText("y'", sx0, H - margin + 16);
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(margin, margin, plotW, plotH);
+            ctx.clip();
+            legendDiv.innerHTML = '';
+            errorDiv.textContent = '';
+            let anyValid = false;
+            graphEquations.forEach((eq, idx) => {
+                const color = graphColors[idx % graphColors.length];
+                const { expr, isImplicit } = parseEquation(eq);
+                const compiled = compileExpression(expr);
+                if (!compiled) return;
+                if (!isImplicit) {
+                    let points = [];
+                    const steps = 600;
+                    for (let i = 0; i <= steps; i++) {
+                        const xVal = xMin + (i / steps) * (xMax - xMin);
+                        const yVal = evalCompiled(compiled, { x: xVal, pi: Math.PI, e: Math.E });
+                        if (!isNaN(yVal)) points.push({ x: xVal, y: yVal });
+                        else { if (points.length > 1) drawCurve(ctx, points, color);
+                            points = []; }
+                    }
+                    if (points.length > 1) drawCurve(ctx, points, color);
+                    anyValid = true;
+                } else {
+                    const N = 100;
+                    const dx = (xMax - xMin) / N;
+                    const dy = (yMax - yMin) / N;
+                    const f = (x, y) => evalCompiled(compiled, { x, y, pi: Math.PI, e: Math.E });
+                    for (let i = 0; i < N; i++) {
+                        for (let j = 0; j < N; j++) {
+                            const x0 = xMin + i * dx,
+                                x1 = x0 + dx;
+                            const y0 = yMin + j * dy,
+                                y1 = y0 + dy;
+                            const f00 = f(x0, y0),
+                                f10 = f(x1, y0),
+                                f01 = f(x0, y1),
+                                f11 = f(x1, y1);
+                            if (isNaN(f00) || isNaN(f10) || isNaN(f01) || isNaN(f11)) continue;
+                            const caseIndex = (f00 > 0 ? 1 : 0) | (f10 > 0 ? 2 : 0) | (f11 > 0 ? 4 : 0) | (f01 >
+                                0 ? 8 : 0);
+                            if (caseIndex === 0 || caseIndex === 15) continue;
+
+                            function interpX(y, fA, fB) { if (Math.abs(fB - fA) < 1e-9) return null;
+                                return lerp(x0, x1, (0 - fA) / (fB - fA)); }
+
+                            function interpY(x, fA, fB) { if (Math.abs(fB - fA) < 1e-9) return null;
+                                return lerp(y0, y1, (0 - fA) / (fB - fA)); }
+                            const bottomX = interpX(y0, f00, f10);
+                            const topX = interpX(y1, f01, f11);
+                            const leftY = interpY(x0, f00, f01);
+                            const rightY = interpY(x1, f10, f11);
+
+                            function drawLine(p1, p2) {
+                                if (!p1 || !p2) return;
+                                ctx.beginPath();
+                                ctx.moveTo(toScreenX(p1.x), toScreenY(p1.y));
+                                ctx.lineTo(toScreenX(p2.x), toScreenY(p2.y));
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 2;
+                                ctx.stroke();
+                            }
+                            switch (caseIndex) {
+                                case 1:
+                                    drawLine({ x: bottomX, y: y0 }, { x: x0, y: leftY });
+                                    break;
+                                case 2:
+                                    drawLine({ x: bottomX, y: y0 }, { x: x1, y: rightY });
+                                    break;
+                                case 3:
+                                    drawLine({ x: x0, y: leftY }, { x: x1, y: rightY });
+                                    break;
+                                case 4:
+                                    drawLine({ x: topX, y: y1 }, { x: x1, y: rightY });
+                                    break;
+                                case 5:
+                                    drawLine({ x: bottomX, y: y0 }, { x: x0, y: leftY });
+                                    drawLine({ x: topX, y: y1 }, { x: x1, y: rightY });
+                                    break;
+                                case 6:
+                                    drawLine({ x: bottomX, y: y0 }, { x: topX, y: y1 });
+                                    break;
+                                case 7:
+                                    drawLine({ x: x0, y: leftY }, { x: topX, y: y1 });
+                                    break;
+                                case 8:
+                                    drawLine({ x: topX, y: y1 }, { x: x0, y: leftY });
+                                    break;
+                                case 9:
+                                    drawLine({ x: bottomX, y: y0 }, { x: topX, y: y1 });
+                                    break;
+                                case 10:
+                                    drawLine({ x: bottomX, y: y0 }, { x: x0, y: leftY });
+                                    drawLine({ x: topX, y: y1 }, { x: x1, y: rightY });
+                                    break;
+                                case 11:
+                                    drawLine({ x: topX, y: y1 }, { x: x1, y: rightY });
+                                    break;
+                                case 12:
+                                    drawLine({ x: x0, y: leftY }, { x: x1, y: rightY });
+                                    break;
+                                case 13:
+                                    drawLine({ x: bottomX, y: y0 }, { x: x1, y: rightY });
+                                    break;
+                                case 14:
+                                    drawLine({ x: bottomX, y: y0 }, { x: x0, y: leftY });
+                                    break;
+                            }
+                        }
+                    }
+                    anyValid = true;
+                }
+                if (anyValid) legendDiv.innerHTML +=
+                    `<span style="color:${color}; margin:0 8px;">━ ${eq}</span>`;
+            });
+            ctx.restore();
+            if (!anyValid) errorDiv.textContent = '⚠️ कोई valid graph नहीं बन सका।';
+        }
+
+        function drawCurve(ctx, points, color) {
+            if (points.length < 2) return;
+            const margin = 50;
+            const W = ctx.canvas.width / (window.devicePixelRatio || 1);
+            const H = ctx.canvas.height / (window.devicePixelRatio || 1);
+            const plotW = W - 2 * margin,
+                plotH = H - 2 * margin;
+            const baseRange = 10;
+            const xMin = -baseRange * zoomLevel,
+                xMax = baseRange * zoomLevel,
+                yMin = -baseRange * zoomLevel,
+                yMax = baseRange * zoomLevel;
+
+            function sx(x) { return margin + (x - xMin) / (xMax - xMin) * plotW; }
+
+            function sy(y) { return margin + (yMax - y) / (yMax - yMin) * plotH; }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(sx(points[0].x), sy(points[0].y));
+            for (let i = 1; i < points.length; i++) ctx.lineTo(sx(points[i].x), sy(points[i].y));
+            ctx.stroke();
+        }
+        window.addEventListener('resize', () => {
+            if (document.getElementById('graphSection').classList.contains('active')) drawGraph();
+        });
+
+        function debounce(fn, delay) { let t; return (...args) => { clearTimeout(t);
+                t = setTimeout(() => fn(...args), delay); }; }
+        showSection('landing');
+    </script>
+</body>
+</html>
